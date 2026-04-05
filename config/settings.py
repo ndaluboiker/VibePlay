@@ -11,7 +11,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-local-key')
 # Set DEBUG to False in production (via Environment Variable)
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']  # In production, change this to your render URL (e.g. vibepics.onrender.com)
+ALLOWED_HOSTS = ['vibeplay-n56i.onrender.com', 'localhost', '127.0.0.1']  # In production, change this to your render URL (e.g. vibepics.onrender.com)
 
 # --- APPLICATION DEFINITION ---
 INSTALLED_APPS = [
