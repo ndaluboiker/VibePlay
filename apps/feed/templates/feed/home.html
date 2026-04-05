@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    /* Fullscreen Feed Setup */
+    .vibe-container { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; background: #000; scrollbar-width: none; }
+    .vibe-container::-webkit-scrollbar { display: none; }
+    .vibe-item { height: 100vh; scroll-snap-align: start; position: relative; display: flex; align-items: center; justify-content: center; }
+
+    video { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Top Header: Brand & Search */
+    .header-top { position: fixed; top: 0; width: 100%; z-index: 100; padding: 15px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); }
+    .brand-name { font-size: 20px; font-weight: bold; color: #fe2c55; text-shadow: 1px 1px 2px #000; }
+    .search-form { flex: 1; margin: 0 15px; }
+    .search-input { width: 100%; padding: 8px 15px; border-radius: 20px; border: none; background: rgba(255,255,255,0.2); color: white; outline: none; }
+
+    /* Right Side Action Buttons */
+    .side-bar { position: absolute; right: 10px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 10; }
+    .action-group { text-align: center; color: white; cursor: pointer; }
+    .action-icon { font-size: 28px; filter: drop-shadow(0 0 2px rgba(0,0,0,0.8)); }
+    .action-label { font-size: 12px; margin-top: 2px; }
+
+    /* Bottom User Overlay */
+    .bottom-overlay { position: absolute; bottom: 80px; left: 15px; right: 80px; color: white; z-index: 10; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+    .user-info { display: flex; align-items: center; margin-bottom: 8px; text-decoration: none; color: white; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; margin-right: 10px; }
+    .username { font-weight: bold; font-size: 16px; }
+    .description { font-size: 14px; line-height: 1.3; margin: 5px 0; }
+</style>
+
+<div class="header-top">
+    <div class="brand-name">VIBEPIC</div>
+    <form class="search-form" action="{% url 'users:search' %}" method="GET">
+        <input type="text" name="q" class="search-input" placeholder="Search vibes...">
+    </form>
+    <div style="font-size: 22px;">🔍</div>
+</div>
+
+<div class="vibe-container" id="video-feed">
+    {% for video in videos %}
+    <div class="vibe-item" data-id="{{ video.id }}">
+        <video src="{{ video.video_file.url }}" loop playsinline class="vibe-video" onclick="togglePlay(this)"></video>
+
+        <div class="side-bar">
+            <div class="action-group" onclick="toggleLike('{{ video.id }}', this)">
+                <div class="action-icon">🤍</div>
+                <div class="action-label">{{ video.likes.count }}</div>
+            </div>
+            <div class="action-group" onclick="openComments('{{ video.id }}')">
+                <div class="action-icon">💬</div>
+                <div class="action-label">Comm</div>
+            </div>
+            <div class="action-group" onclick="sendGift('{{ video.id }}')">
+                <div class="action-icon">🎁</div>
+                <div class="action-label">Gift</div>
+            </div>
+            <div class="action-group" onclick="shareVideo('{{ request.build_absolute_uri }}{{ video.video_file.url }}')">
+                <div class="action-icon">⤴️</div>
+                <div class="action-label">Share</div>
+            </div>
+            <a href="{{ video.video_file.url }}" download class="action-group" style="text-decoration:none;">
+                <div class="action-icon">📥</div>
+                <div class="action-label">Save</div>
+            </a>
+        </div>
+
+        <div class="bottom-overlay">
+            <a href="{% url 'users:profile' video.creator.username %}" class="user-info">
+                <img src="{{ video.creator.avatar.url }}" class="user-avatar">
+                <span class="username">@{{ video.creator.username }}</span>
+            </a>
+            <div class="description">{{ video.description }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+// 1. VIDEO CONTROL (Play with Sound)
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        const vid = entry.target.querySelector('video');
+        if (entry.isIntersecting) {
+            vid.play().catch(() => {
+                // Browsers block autoplay with sound unless user clicks first
+                vid.muted = true;
+                vid.play();
+            });
+        } else {
+            vid.pause();
+            vid.currentTime = 0;
+        }
+    });
+}, { threshold: 0.8 });
+
+document.querySelectorAll('.vibe-item').forEach(item => observer.observe(item));
+
+// Toggle Play/Pause on click
+function togglePlay(vid) {
+    if (vid.paused) { vid.play(); vid.muted = false; }
+    else { vid.pause(); }
+}
+
+// 2. SHARE FUNCTION
+function shareVideo(url) {
+    if (navigator.share) {
+        navigator.share({ title: 'Check this out on VibePic', url: url });
+    } else {
+        alert("Link copied: " + url);
+    }
+}
+
+// 3. LIKE & GIFT LOGIC (Connects to interactions/views.py)
+function toggleLike(id, el) {
+    fetch(`/interactions/like/${id}/`).then(res => res.json()).then(data => {
+        el.querySelector('.action-icon').innerHTML = data.liked ? '❤️' : '🤍';
+        el.querySelector('.action-label').innerText = data.count;
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="padding: 20px; background: white; color: black; min-height: 100vh; text-align: center;">
+    <h2 style="margin-top: 50px;">Upload to VibePlay</h2>
+    <p style="color: #666;">Share your vibe with the world</p>
+
+    <form method="POST" enctype="multipart/form-data" style="margin-top: 30px; display: inline-block; text-align: left; width: 100%; max-width: 400px;">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 20px;">
+            <label>Select Video File:</label><br>
+            {{ form.video_file }}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label>Caption / Description:</label><br>
+            {{ form.description }}
+        </div>
+
+        <button type="submit" style="background: #fe2c55; color: white; border: none; padding: 15px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer;">
+            POST VIDEO
+        </button>
+    </form>
+</div>
+{% endblock %}

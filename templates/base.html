@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibePlay</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --vp-red: #fe2c55; --vp-cyan: #25f4ee; --vp-black: #010101; }
+        body { background: var(--vp-black); color: white; margin: 0; font-family: sans-serif; overflow: hidden; }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; height: 60px;
+            background: black; display: flex; justify-content: space-around;
+            align-items: center; border-top: 0.5px solid #333; z-index: 1000;
+        }
+        .nav-item { color: #888; text-decoration: none; text-align: center; font-size: 22px; position: relative; }
+        .nav-item.active { color: white; }
+
+        /* Updated Camera Upload Button */
+        .upload-wrapper {
+            width: 45px; height: 30px;
+            background: linear-gradient(90deg, var(--vp-cyan) 50%, var(--vp-red) 50%);
+            border-radius: 8px; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        /* The White Center with RED Camera Icon */
+        .upload-wrapper::after {
+            content: "\f030"; /* FontAwesome Camera Unicode */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            background: white;
+            color: var(--vp-red); /* CHANGED: Full Red Color */
+            width: 37px; height: 26px;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+
+        .badge {
+            position: absolute; top: -5px; right: -12px; background: var(--vp-red);
+            color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    {% block content %}{% endblock %}
+
+    <nav class="bottom-nav">
+        <a href="{% url 'videos:feed' %}" class="nav-item"><i class="fas fa-home"></i></a>
+
+        <a href="{% url 'users:search' %}" class="nav-item"><i class="fas fa-search"></i></a>
+
+        <form id="directUploadForm" action="{% url 'videos:upload' %}" method="POST" enctype="multipart/form-data" style="display:none;">
+            {% csrf_token %}
+            <input type="file" name="file" id="fileInput" accept="video/*" onchange="document.getElementById('directUploadForm').submit()">
+        </form>
+
+        <div class="upload-wrapper" onclick="document.getElementById('fileInput').click()"></div>
+
+        <a href="{% url 'interactions:inbox' %}" class="nav-item">
+            <i class="fas fa-comment-dots"></i>
+            <span id="notifCount" class="badge" style="display:none;">0</span>
+        </a>
+
+        <a href="{% url 'users:profile' request.user.username %}" class="nav-item"><i class="fas fa-user"></i></a>
+    </nav>
+
+    <script>
+        function updateNotifications() {
+            fetch('/interactions/check-notifs/')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notifCount');
+                    if (data.unread_count > 0) {
+                        badge.innerText = data.unread_count;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                });
+        }
+        setInterval(updateNotifications, 5000);
+        updateNotifications();
+    </script>
+</body>
+</html>

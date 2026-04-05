@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="padding: 20px; background: #f9f9f9; color: black; min-height: 100vh;">
+    <h1 style="margin-top: 40px;">Creator Tools</h1>
+
+    <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <p style="color: #666;">Estimated Earnings (40% Share)</p>
+        <h2 style="font-size: 32px;">${{ wallet.earnings }}</h2>
+        <button style="background: black; color: white; border: none; padding: 12px 25px; border-radius: 25px; width: 100%;">Withdraw to PayPal</button>
+    </div>
+
+    <div style="margin-top: 25px; background: white; padding: 20px; border-radius: 15px;">
+        <h3>Business Program Requirements</h3>
+        <div style="margin-bottom: 15px;">
+            <p>Followers: <strong>{{ profile_user.followers.count }}</strong> / 1,000</p>
+            <div style="background: #eee; height: 10px; border-radius: 5px;">
+                <div style="background: #fe2c55; width: {{ follower_percent }}%; height: 100%; border-radius: 5px;"></div>
+            </div>
+        </div>
+
+        <div>
+            <p>Video Views: <strong>{{ profile_user.total_views }}</strong> / 5,000</p>
+            <div style="background: #eee; height: 10px; border-radius: 5px;">
+                <div style="background: #fe2c55; width: {{ views_percent }}%; height: 100%; border-radius: 5px;"></div>
+            </div>
+        </div>
+
+        {% if is_eligible and not profile_user.is_business_account %}
+            <form action="{% url 'users:join-business' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" style="margin-top: 20px; background: #fe2c55; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold;">
+                    ACTIVATE BUSINESS ADS (40% REVENUE)
+                </button>
+            </form>
+        {% elif profile_user.is_business_account %}
+            <p style="color: green; margin-top: 20px; font-weight: bold;">✅ Business Account Active</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

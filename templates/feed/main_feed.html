@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .video-container { height: 100vh; overflow-y: scroll; snap-type: y mandatory; background: black; }
+    section { height: 100vh; snap-align: start; position: relative; }
+    video { width: 100%; height: 100%; object-fit: cover; }
+
+    /* TikTok Sidebar Icons */
+    .sidebar { position: absolute; right: 10px; bottom: 130px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 10; }
+    .p-img-container { position: relative; width: 48px; height: 48px; }
+    .p-img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
+
+    .follow-plus {
+        position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+        background: #fe2c55; color: white; width: 20px; height: 20px;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 12px; border: 2px solid black; cursor: pointer;
+    }
+</style>
+
+<div class="video-container" id="feed-container">
+    {% for video in videos %}
+        <section id="{{ video.id }}">
+            <video src="{{ video.file.url }}" loop onclick="this.paused ? this.play() : this.pause()"></video>
+
+            <div class="sidebar">
+                <div class="p-img-container">
+                    <a href="{% url 'users:profile' video.user.username %}">
+                        {% if video.user.profile_pic %}
+                            <img src="{{ video.user.profile_pic.url }}" class="p-img">
+                        {% else %}
+                            <div class="p-img" style="background:#333; display:flex; align-items:center; justify-content:center;">👤</div>
+                        {% endif %}
+                    </a>
+
+                    {% if request.user != video.user %}
+                        <div class="follow-plus" id="plus-{{ video.user.id }}" onclick="ajaxFollowPlus('{{ video.user.id }}')">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div onclick="ajaxLike('{{ video.id }}', this)" style="color:white; text-align:center; cursor:pointer;">
+                    <i class="fas fa-heart" style="font-size:30px;"></i>
+                    <p style="font-size:12px; margin:5px 0;">{{ video.likes.count }}</p>
+                </div>
+            </div>
+
+            <div style="position: absolute; left: 15px; bottom: 90px; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
+                <strong>@{{ video.user.username }}</strong>
+                <p>{{ video.description }}</p>
+            </div>
+        </section>
+
+        {% if forloop.counter|divisibleby:3 %}
+        <section style="display: flex; align-items: center; justify-content: center; background: #111;">
+            <div style="text-align: center; color: #555;">
+                <i class="fas fa-ad" style="font-size: 40px; margin-bottom: 10px;"></i>
+                <p>Sponsored Content</p>
+            </div>
+        </section>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+    function ajaxFollowPlus(userId) {
+        fetch(`/interactions/follow/${userId}/`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.followed) {
+                    // Hide all plus icons for this user in the current feed
+                    document.querySelectorAll(`#plus-${userId}`).forEach(el => el.style.display = 'none');
+                }
+            });
+    }
+
+    // Auto-play videos on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const vid = entry.target.querySelector('video');
+            if (vid) {
+                if (entry.isIntersecting) vid.play();
+                else { vid.pause(); vid.currentTime = 0; }
+            }
+        });
+    }, { threshold: 0.8 });
+    document.querySelectorAll('section').forEach(s => observer.observe(s));
+</script>
+{% endblock %}

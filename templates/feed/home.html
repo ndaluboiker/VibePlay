@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Full Screen TikTok Layout */
+    .video-feed {
+        height: 100vh; width: 100vw;
+        overflow-y: scroll; scroll-snap-type: y mandatory;
+        scrollbar-width: none;
+    }
+    .video-feed::-webkit-scrollbar { display: none; }
+
+    .video-container {
+        height: 100vh; width: 100vw;
+        scroll-snap-align: start;
+        position: relative; background: #000;
+    }
+
+    video {
+        height: 100%; width: 100%;
+        object-fit: cover; /* Edge-to-Edge */
+    }
+
+    /* Side Bar Layer (Branded Icons) */
+    .side-bar {
+        position: absolute; right: 12px; bottom: 120px;
+        display: flex; flex-direction: column; align-items: center;
+        gap: 18px; z-index: 10;
+    }
+
+    /* TikTok Red Plus Button */
+    .follow-plus {
+        position: absolute; bottom: -8px; left: 50%;
+        transform: translateX(-50%);
+        background: var(--vp-red);
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; color: white; border: 2.5px solid white;
+        cursor: pointer; transition: 0.2s;
+    }
+    /* State change for followed */
+    .follow-plus.followed { background: var(--vp-cyan); transform: translateX(-50%) rotate(45deg); }
+
+    .action-btn { text-align: center; color: white; cursor: pointer; transition: transform 0.1s; }
+    .action-btn:active { transform: scale(1.1); }
+
+    .action-btn i { font-size: 30px; margin-bottom: 3px; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+
+    .stat-text { font-size: 13px; font-weight: 600; text-shadow: 1px 1px 3px black; }
+
+    .icon-red { color: var(--vp-red); }
+    .icon-cyan { color: var(--vp-cyan); }
+    /* Icon Pop Animation */
+    .heart-liked { animation: heartPop 0.3s ease; }
+
+    /* Bottom Info Layer */
+    .video-info {
+        position: absolute; left: 15px; bottom: 85px;
+        max-width: 70%; z-index: 10; color: white;
+    }
+    .username { font-weight: bold; font-size: 18px; margin-bottom: 8px; display: block; text-shadow: 1px 1px 4px black;}
+    .description { font-size: 15px; line-height: 1.4; text-shadow: 1px 1px 3px black; }
+
+    /* Animations */
+    @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+    /* Slide-Up Comment Panel */
+    .comment-panel {
+        position: fixed; bottom: -100%; left: 0; width: 100%; height: 65vh;
+        background: rgba(1, 1, 1, 0.95); border-top: 1px solid #333;
+        border-top-left-radius: 15px; border-top-right-radius: 15px;
+        transition: bottom 0.3s ease; z-index: 2000;
+        backdrop-filter: blur(10px);
+    }
+    .comment-panel.active { bottom: 0; }
+    .panel-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 15px 20px; border-bottom: 0.5px solid #222;
+        font-size: 14px; color: #888;
+    }
+    .panel-list {
+        height: calc(100% - 110px); overflow-y: scroll; padding: 15px;
+    }
+    .comment-input-area {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        display: flex; align-items: center; padding: 10px 15px;
+        background: rgba(0,0,0,0.9); border-top: 0.5px solid #222; gap: 10px;
+    }
+    .comment-input {
+        flex: 1; background: #111; border: 1px solid #333;
+        border-radius: 20px; padding: 10px 15px; color: white;
+    }
+    .comment-send-btn { background: none; border: none; color: var(--vp-cyan); font-weight: 700; cursor: pointer;}
+</style>
+
+<div class="video-feed" id="mainFeed">
+    {% for video in videos %}
+    <div class="video-container">
+        <video class="vplay-video" loop playsinline preload="auto" onclick="playPause(this)"
+               src="{{ video.file.url }}" type="video/mp4"></video>
+
+        <div class="side-bar">
+            <div class="user-follow-group" style="position: relative;">
+                <a href="{% url 'users:profile' video.user.username %}">
+                    {% if video.user.profile_pic %}
+                        <img src="{{ video.user.profile_pic.url }}" style="width:50px; height:50px; border-radius:50%; border:2.5px solid white; object-fit:cover;">
+                    {% else %}
+                        <div style="width:50px; height:50px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; border:2.5px solid white;">👤</div>
+                    {% endif %}
+                </a>
+                {% if request.user != video.user %}
+                    <div class="follow-plus" onclick="ajaxFollow(this, '{{ video.user.id }}')"><i class="fas fa-plus"></i></div>
+                {% endif %}
+            </div>
+
+            <div class="action-btn" onclick="ajaxLike(this, '{{ video.id }}')">
+                <i class="fas fa-heart {% if request.user in video.likes.all %}icon-red{% endif %}"></i>
+                <p class="stat-text count">{{ video.likes.count }}</p>
+            </div>
+
+            <div class="action-btn" onclick="openComments('{{ video.id }}')">
+                <i class="fas fa-comment-dots icon-cyan"></i>
+                <p class="stat-text count">{{ video.comments.count }}</p>
+            </div>
+
+            <div class="action-btn" onclick="ajaxShare('{{ video.id }}')">
+                <i class="fas fa-share icon-cyan"></i>
+                <p class="stat-text">Share</p>
+            </div>
+
+            <div class="action-btn" onclick="ajaxGift('{{ video.id }}')">
+                <i class="fas fa-gift icon-red"></i>
+                <p class="stat-text">Gift</p>
+            </div>
+        </div>
+
+        <div class="video-info">
+            <a href="{% url 'users:profile' video.user.username %}" style="text-decoration: none; color: white;">
+                <span class="username">@{{ video.user.username }}</span>
+            </a>
+            <p class="description">{{ video.description }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="commentPanel" class="comment-panel">
+    <div class="panel-header">
+        <span id="commentCountHeader">Comments</span>
+        <button onclick="closeComments()" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+    <div class="panel-list" id="commentList">
+        </div>
+    <div class="comment-input-area">
+        <input type="text" id="commentText" class="comment-input" placeholder="Add a comment...">
+        <button class="comment-send-btn" onclick="submitComment()">Post</button>
+    </div>
+</div>
+
+<script>
+    // Global Constants
+    const CSRF_TOKEN = '{{ csrf_token }}';
+
+    // 1. Play/Pause Logic (Real TikTok Tap behavior)
+    function playPause(vid) {
+        if (vid.paused) { vid.play(); }
+        else { vid.pause(); }
+    }
+
+    // 2. Intersection Observer (Plays video only when it's fully on-screen)
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target.querySelector('video');
+            if (entry.isIntersecting) {
+                video.play().catch(e => console.log("Autoplay blocked:", e)); // Autoplay if on screen
+            } else {
+                video.pause(); // Pause if scrolled off
+                video.currentTime = 0; // Reset to start
+            }
+        });
+    }, { threshold: 0.8 }); // Wait until 80% is visible
+
+    document.querySelectorAll('.video-container').forEach(container => {
+        observer.observe(container);
+    });
+
+    /** * AJAX Functions for 100% Functionality ***/
+
+    // 3. AJAX Like (Red Heart Pop Animation)
+    function ajaxLike(btn, videoId) {
+        fetch(`/interactions/like/${videoId}/`)
+            .then(res => res.json())
+            .then(data => {
+                const countText = btn.querySelector('.count');
+                countText.innerText = data.likes_count;
+
+                const heart = btn.querySelector('i');
+                if (data.liked) {
+                    heart.classList.add('heart-liked');
+                } else {
+                    heart.classList.remove('heart-liked');
+                }
+            })
+            .catch(err => console.log("Like failed:", err));
+    }
+
+    // 4. AJAX Follow (Plus button turns Cyan ✓)
+    function ajaxFollow(btn, userId) {
+        fetch(`/interactions/follow/${userId}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.followed) {
+                    btn.classList.add('followed');
+                    btn.innerHTML = '<i class="fas fa-check"></i>'; // Checkmark ✓
+                } else {
+                    btn.classList.remove('followed');
+                    btn.innerHTML = '<i class="fas fa-plus"></i>'; // Plus back
+                }
+            })
+            .catch(err => console.log("Follow failed:", err));
+    }
+
+    /** * 5. Comment Panel AJAX & Logic ***/
+    let currentVideoIdComment = null;
+
+    function openComments(videoId) {
+        currentVideoIdComment = videoId;
+        const panel = document.getElementById('commentPanel');
+        panel.classList.add('active'); // Slide up
+
+        fetch(`/interactions/comments/${videoId}/`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('commentList');
+                document.getElementById('commentCountHeader').innerText = `${data.comments.length} Comments`;
+
+                // Real TikTok comment layout (Avatar, Username, Text)
+                list.innerHTML = data.comments.map(c => `
+                    <div class="comment-item" style="display:flex; gap:10px; margin-bottom:20px;">
+                        <img src="${c.profile_pic ? c.profile_pic : '#'}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">
+                        <div>
+                            <strong style="color:#aaa; font-size:13px; display:block;">@${c.username}</strong>
+                            <p style="margin:2px 0; color:#fff; font-size:14px;">${c.text}</p>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(err => console.log("Comments failed:", err));
+    }
+
+    function closeComments() {
+        document.getElementById('commentPanel').classList.remove('active');
+    }
+
+    // Post comment via AJAX (No reload)
+    function submitComment() {
+        const textInput = document.getElementById('commentText');
+        const text = textInput.value;
+        if (!text) return;
+
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        fetch(`/interactions/comment/post/${currentVideoIdComment}/`, {
+            method: 'POST',
+            body: formData
+        }).then(() => {
+            textInput.value = ''; // Clear input
+            openComments(currentVideoIdComment); // Refresh comment list
+        })
+        .catch(err => console.log("Posting failed:", err));
+    }
+
+    // 6. Native Share Dialogue
+    function ajaxShare(videoId) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this vibe on VibePlay',
+                url: `/feed/video/${videoId}/` // Update with your actual share URL view
+            });
+        } else {
+            // Fallback: Copy to clipboard
+            navigator.clipboard.writeText(`/feed/video/${videoId}/`).then(() => {
+                alert('VibePlay Link Copied!');
+            });
+        }
+    }
+
+    // 7. AJAX Gift (Placeholder Logic)
+    function ajaxGift(videoId) {
+        alert('Gifting feature coming soon to VibePlay!');
+    }
+</script>
+{% endblock %}

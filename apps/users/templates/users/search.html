@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <h2>Find Friends</h2>
+
+    <form action="{% url 'users:search' %}" method="GET" style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search username..."
+               style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #dbdbdb;">
+        <button type="submit" style="padding: 10px 20px; background: #262626; color: #fff; border: none; border-radius: 8px;">
+            Search
+        </button>
+    </form>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+
+    <div class="results-list">
+        {% if results %}
+            {% for profile in results %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #fff; border-radius: 10px; margin-bottom: 10px; border: 1px solid #efefef;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            {% if profile.profile_pic %}
+                                <img src="{{ profile.profile_pic.url }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                                👤
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <strong style="display: block;">{{ profile.username }}</strong>
+                            <small style="color: #8e8e8e;">{{ profile.bio|truncatechars:30|default:"No bio yet" }}</small>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'users:profile' profile.username %}"
+                       style="text-decoration: none; color: #0095f6; font-weight: bold; font-size: 14px;">
+                        View Profile
+                    </a>
+                </div>
+            {% endfor %}
+        {% elif query %}
+            <p style="text-align: center; color: #8e8e8e; margin-top: 50px;">No users found for "{{ query }}"</p>
+        {% else %}
+            <p style="text-align: center; color: #8e8e8e; margin-top: 50px;">Try searching for a name!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

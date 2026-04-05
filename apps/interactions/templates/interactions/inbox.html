@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="padding: 20px; background: white; color: black; min-height: 100vh; font-family: sans-serif;">
+    <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+        <h2 style="margin: 0;">Inbox</h2>
+        <span style="color: #fe2c55; font-weight: bold;">All activity ▼</span>
+    </div>
+
+    <div class="notification-list" style="margin-top: 10px;">
+        {% for n in notifications %}
+        <div style="display: flex; align-items: center; padding: 12px 0;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #eee; overflow: hidden; margin-right: 12px;">
+                <img src="{{ n.sender.avatar.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+
+            <div style="flex: 1;">
+                <span style="font-weight: bold;">{{ n.sender.username }}</span>
+                <span style="color: #555;">{{ n.get_notification_type_display }}</span>
+                <p style="font-size: 13px; color: #999; margin: 2px 0 0 0;">{{ n.created_at|timesince }} ago</p>
+            </div>
+
+            {% if n.video %}
+            <div style="width: 40px; height: 54px; background: black; border-radius: 4px; overflow: hidden;">
+                <video src="{{ n.video.video_file.url }}" style="width: 100%; height: 100%; object-fit: cover;"></video>
+            </div>
+            {% elif n.notification_type == 'FOLLOW' %}
+            <button style="background: #fe2c55; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: bold; font-size: 13px;">Follow</button>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div style="text-align: center; margin-top: 100px; color: #888;">
+            <p style="font-size: 40px;">💬</p>
+            <p>Notifications about your videos <br> and account will appear here.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

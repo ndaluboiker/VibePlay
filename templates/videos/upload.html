@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="background: #000; min-height: 100vh; padding: 20px; color: white; text-align: center;">
+    <h2 style="font-weight: 600; margin-bottom: 30px;">Create New Post</h2>
+
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+
+        <label for="cameraInput" style="cursor: pointer; display: block; border: 2px dashed #333; border-radius: 15px; padding: 60px 20px; margin-bottom: 20px;">
+            <div style="font-size: 40px; margin-bottom: 10px;">🎥</div>
+            <p style="font-size: 16px; font-weight: 500;">Tap to Record Video</p>
+            <span style="font-size: 12px; color: #8e8e8e;">Camera will open immediately</span>
+        </label>
+
+        <input type="file" name="file" id="cameraInput" accept="video/*" capture="camcorder" style="display: none;" onchange="showPreview(this)">
+
+        <video id="videoPreview" controls style="width: 100%; border-radius: 10px; display: none; margin-bottom: 20px;"></video>
+
+        <textarea name="description" placeholder="Write a caption..."
+            style="width: 100%; background: #121212; color: white; border: 1px solid #333; border-radius: 10px; padding: 12px; margin-bottom: 20px; font-family: inherit;"></textarea>
+
+        <button type="submit" style="width: 100%; background: #0095f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600;">
+            Share to Feed
+        </button>
+    </form>
+</div>
+
+<script>
+    function showPreview(input) {
+        if (input.files && input.files[0]) {
+            const video = document.getElementById('videoPreview');
+            video.src = URL.createObjectURL(input.files[0]);
+            video.style.display = 'block';
+            document.querySelector('label[for="cameraInput"]').style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

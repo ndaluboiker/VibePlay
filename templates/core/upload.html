@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 50px auto; padding: 20px;">
+    <h2 style="text-align: center; margin-bottom: 30px;">Upload New Vibe</h2>
+
+    <div style="background: #121212; padding: 30px; border-radius: 15px; border: 2px dashed #333; text-align: center;">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 20px;">
+                <label for="video_file" style="display: block; margin-bottom: 10px; color: #888;">Select Video (MP4/WebM)</label>
+                <input type="file" name="video_file" id="video_file" required style="background: #222; width: 100%; padding: 10px; border-radius: 5px; color: white;">
+            </div>
+
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="color: #888;">Caption</label>
+                <textarea name="description" placeholder="What's the vibe?" style="width: 100%; height: 100px; background: #222; color: white; border: 1px solid #333; border-radius: 8px; padding: 10px; margin-top: 5px; box-sizing: border-box;"></textarea>
+            </div>
+
+            <div style="background: rgba(37, 244, 238, 0.1); padding: 10px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #25F4EE;">
+                <p style="font-size: 12px; color: #25F4EE; margin: 0;">⚠️ Maximum file size: 50MB. Only use your own content.</p>
+            </div>
+
+            <button type="submit" class="btn-vibe" style="width: 100%; padding: 15px; font-size: 18px;">POST VIDEO</button>
+        </form>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{% url 'feed' %}" style="color: #888; text-decoration: none;">Cancel</a>
+    </div>
+</div>
+{% endblock %}

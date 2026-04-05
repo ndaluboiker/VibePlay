@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="vibe-container" style="height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory;">
+    {% for v in videos %}
+    <div class="vibe-card" style="height: 100vh; scroll-snap-align: start; position: relative; background: #000;">
+        <video src="{{ v.video_file.url }}" loop autoplay muted style="height: 100%; width: 100%; object-fit: cover;"></video>
+
+        <div style="position: absolute; bottom: 80px; left: 20px; z-index: 10;">
+            <h3 style="margin: 0;">@{{ v.creator.username }} {% if v.creator.is_verified %}✔️{% endif %}</h3>
+            <p style="font-size: 14px; color: #eee;">{{ v.description }}</p>
+        </div>
+
+        <div style="position: absolute; right: 15px; bottom: 120px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+            <div style="text-align: center;">
+                <button style="background: none; border: none; font-size: 30px;">❤️</button>
+                <small style="display: block;">{{ v.likes_count }}</small>
+            </div>
+            <div style="text-align: center;">
+                <button style="background: none; border: none; font-size: 30px;">🎁</button>
+                <small style="display: block;">Gift</small>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding-top: 100px;">
+        <h2>No Vibes Yet!</h2>
+        <p>Be the first to upload a video.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

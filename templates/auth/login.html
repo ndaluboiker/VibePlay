@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #000;">
+    <div style="background: #121212; padding: 40px; border-radius: 12px; width: 340px; border: 1px solid #222; text-align: center;">
+        <h1 style="color: #FE2C55; font-size: 32px; margin-bottom: 10px;">VibePlay</h1>
+        <p style="color: #888; margin-bottom: 30px;">Log in to your creator account</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div style="text-align: left; margin-bottom: 15px;">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn-vibe" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;">Log In</button>
+        </form>
+
+        <div style="margin-top: 25px; border-top: 1px solid #222; padding-top: 20px;">
+            <p style="color: #888; font-size: 14px;">Don't have an account?
+                <a href="{% url 'signup' %}" style="color: #25F4EE; text-decoration: none; font-weight: bold;">Sign up</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+let seenIds = [];
+
+// Intersection Observer for Infinite Loading
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const vid = entry.target.querySelector('video');
+            vid.play();
+
+            // If we are at the 3rd video, load 3 more immediately
+            if (entry.target.getAttribute('data-index') % 3 === 0) {
+                loadMore();
+            }
+        } else {
+            entry.target.querySelector('video').pause();
+        }
+    });
+}, { threshold: 0.8 });
+
+function loadMore() {
+    fetch(`/videos/shuffled-chunk/?seen_ids[]=${seenIds.join('&seen_ids[]=')}`)
+        .then(res => res.json())
+        .then(data => {
+            data.videos.forEach(v => {
+                seenIds.push(v.id);
+                appendVideoToUI(v);
+            });
+        });
+}
+
+// Function to handle the Red Plus Follow click
+function followUser(userId, element) {
+    fetch(`/users/toggle-follow/${userId}/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.followed) {
+                element.style.display = 'none'; // Hide plus icon after follow
+            }
+        });
+}

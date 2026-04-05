@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-container" style="padding: 50px; text-align: center; color: white; background: #121212; height: 100vh;">
+    <h2>Join VibePlay</h2>
+    <p>Create an account to start earning 40% revenue!</p>
+
+    <form method="post" style="display: inline-block; text-align: left; background: #1e1e1e; padding: 30px; border-radius: 15px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background: #fe2c55; color: white; border: none; width: 100%; padding: 10px; border-radius: 5px; font-weight: bold;">
+            Sign Up
+        </button>
+    </form>
+
+    <p>Already have an account? <a href="{% url 'users:login' %}" style="color: #fe2c55;">Log In</a></p>
+</div>
+{% endblock %}
